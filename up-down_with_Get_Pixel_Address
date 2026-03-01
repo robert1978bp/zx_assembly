@@ -1,0 +1,160 @@
+; 16x16 sprite with up/down control 
+
+; B and C for coordinates
+; IX for Sprite source
+; DE for screen address
+; H as counter on 8x drawing
+; press 'Q' for up 'A' for down
+
+org 33000
+
+ld a, %00000110  ; border change
+out (254), a
+
+ld b, 60      ; y coordinate
+ld c, 40      ; x coordinate
+
+main
+ld ix, sprite
+push bc
+call draw_sprite
+
+detect_keys
+pop bc
+push bc
+ld a, b
+cp 176
+jp z, the_end
+cp 0
+jp z, the_end
+
+ld bc, 64510    ; Port for Q-W-E-R-T row
+in a, (c)       ; Read port into A
+and 1           ; Mask bit 0 (Q key)
+jp z, key_q_pressed ; If zero, 'Q' is pressed
+
+ld bc, 65022    ; Port for A-S-D-F-G row
+in a, (c)       ; Read port into A
+and 1           ; Mask bit 0 (A key)
+jp z, key_a_pressed ; If zero, 'A' is pressed
+
+jp detect_keys
+
+key_q_pressed:
+ld a, %00000011  ; border change
+out (254), a
+call delay
+pop bc
+push bc
+call draw_sprite
+call clr_sprite
+pop bc
+dec b            ; up 1 on y coordinate
+push bc
+jp detect_keys
+
+key_a_pressed:
+ld a, %00000001  ; border change
+out (254), a
+call delay
+pop bc
+push bc
+call clr_sprite
+pop bc    
+inc b            ; down 1 on y coordinate
+push bc
+call draw_sprite
+pop bc
+push bc
+jp detect_keys
+
+the_end
+pop bc
+ret ; END - return to basic
+;routines below
+
+delay
+halt
+ret
+
+draw_sprite
+ld ix, sprite
+ld h, 8 ;set counter
+call loop_8x16
+inc d
+ld h, 8 ;set counter
+call loop_8x16
+ret
+
+loop_8x16
+call Get_Pix_Address_DE  ; calculate screen address for each line
+ld a, (ix+0)
+ld (de), a
+inc e
+ld a, (ix+1)
+ld (de), a
+inc ix
+inc ix
+inc b
+dec h
+jp nz, loop_8x16
+ret
+
+clr_sprite
+ld h, 8 ;set counter
+loop_8x8_clr
+call Get_Pix_Address_DE
+ld a, 0
+ld (de), a
+inc e
+ld (de), a
+inc b
+dec h
+jp nz, loop_8x8_clr
+ret
+
+Get_Pix_Address_DE:
+    LD A, B            ; Y coordinate
+    AND %00000111      ; Y2,Y1,Y0
+    OR %01000000       ; Base &4000
+    LD D, A            ; Store in D
+    LD A, B            ; Y7,Y6
+    RRA
+    RRA
+    RRA
+    AND %00011000
+    OR D               ; OR with Y2,Y1,Y0
+    LD D, A            ; Final D
+    LD A, B            ; Y5,Y4,Y3
+    RLA
+    RLA
+    AND %11100000
+    LD E, A            ; Store in E
+    LD A, C            ; X4,X3,X2,X1,X0
+    RRA
+    RRA
+    RRA
+    AND %00011111
+    OR E               ; OR with Y5,Y4,Y3
+    LD E, A            ; Final E
+    RET                ; Address in DE   
+
+sprite
+;top-half 
+defb %11000011, %11000111
+defb %10010001, %10010001
+defb %10110000, %00101000
+defb %10010000, %00001000
+defb %00010000, %00110000
+defb %00111000, %00111100
+defb %10000001, %10000001
+defb %11000011, %11000011
+;bottom-half 
+defb %11000011, %11000011
+defb %10011001, %10011001
+defb %10101000, %00101000
+defb %10011000, %01111000
+defb %00001000, %00001000
+defb %00111000, %00011100
+defb %10000001, %10000001
+defb %11000011, %11000011
