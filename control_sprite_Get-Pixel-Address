@@ -23,9 +23,9 @@ detect_keys
 pop bc
 push bc
 ld a, b
-cp 176
+cp 176           ; reached bottom, return to basic
 jp z, the_end
-cp 0
+cp 0             ; reached top, return to basic
 jp z, the_end
 
 ld bc, 64510    ; Port for Q-W-E-R-T row
