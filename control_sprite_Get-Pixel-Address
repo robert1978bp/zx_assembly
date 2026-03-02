@@ -8,7 +8,7 @@
 
 org 33000
 
-ld a, %00000110  ; border change
+ld a, %00000110  ; border change just because
 out (254), a
 
 ld b, 60      ; y coordinate
@@ -54,7 +54,7 @@ push bc
 jp detect_keys
 
 key_a_pressed:
-ld a, %00000001  ; border change
+ld a, %00000001  ; border change just because
 out (254), a
 call delay
 pop bc
@@ -74,16 +74,16 @@ ret ; END - return to basic
 ;routines below
 
 delay
-halt
+halt                 ; look Ma no flicker
 ret
 
 draw_sprite
 ld ix, sprite
 ld h, 8 ;set counter
-call loop_8x16
+call loop_8x16        ; draw top row of sprite
 inc d
 ld h, 8 ;set counter
-call loop_8x16
+call loop_8x16        ; draw bottom row of sprite
 ret
 
 loop_8x16
